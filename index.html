@@ -187,11 +187,63 @@ footer {
     </div>
   </footer>
   <script>
-  // SAFER NEWS SOURCE: Google News RSS (NO API KEY)
-  // Uses AllOrigins proxy to bypass CORS safelyconst headlinesContainer = document.querySelector('#headlines .grid'); const aiContainer = document.querySelector('#ai .grid'); const entertainmentContainer = document.querySelector('#entertainment .grid');
+const feeds = {
+  world: "https://news.google.com/rss?hl=en&gl=US&ceid=US:en",
+  ai: "https://news.google.com/rss/search?q=Artificial+Intelligence",
+  entertainment: "https://news.google.com/rss/search?q=Entertainment",
+  africa: "https://news.google.com/rss/search?q=Africa+Kenya+News"
+};
 
-async function fetchRSS(rssUrl, container) { try { const res = await fetch(https://api.allorigins.win/raw?url=${encodeURIComponent(rssUrl)}); const text = await res.text(); const parser = new DOMParser(); const xml = parser.parseFromString(text, 'text/xml'); const items = Array.from(xml.querySelectorAll('item')).slice(0, 3);
+function loadRSS(feedUrl, container) {
+  const proxy = "https://api.allorigins.win/get?url=";
+  fetch(proxy + encodeURIComponent(feedUrl))
+    .then(res => res.json())
+    .then(data => {
+      const parser = new DOMParser();
+      const xml = parser.parseFromString(data.contents, "text/xml");
+      const items = xml.querySelectorAll("item");
 
+      container.innerHTML = "";
+
+      items.forEach(item => {
+        const title = item.querySelector("title").textContent;
+        const link = item.querySelector("link").textContent;
+        const source = item.querySelector("source")?.textContent || "Google News";
+
+        const card = document.createElement("article");
+        card.className = "card";
+        card.innerHTML = `
+          <span class="tag">${source}</span>
+          <h3>${title}</h3>
+          <a class="btn" href="${link}" target="_blank" rel="noopener">Read more</a>
+        `;
+        container.appendChild(card);
+      });
+    })
+    .catch(err => {
+      container.innerHTML = "<p>Failed to load news.</p>";
+      console.error(err);
+    });
+}
+
+window.onload = () => {
+  loadRSS(feeds.world, document.querySelector("#headlines .grid"));
+  loadRSS(feeds.ai, document.querySelector("#ai .grid"));
+  loadRSS(feeds.entertainment, document.querySelector("#entertainment .grid"));
+
+  // Africa section auto-added
+  const africaSection = document.createElement("section");
+  africaSection.innerHTML = `
+    <h2>🌍 Africa & Kenya</h2>
+    <div class="grid"></div>
+  `;
+  document.querySelector("main").appendChild(africaSection);
+  loadRSS(feeds.africa, africaSection.querySelector(".grid"));
+};
+
+// Auto refresh every 30 minutes
+setTimeout(() => location.reload(), 1800000);
+</script>
 container.innerHTML = '';
   items.forEach(item => {
     const title = item.querySelector('title')?.textContent;
